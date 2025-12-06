@@ -6,11 +6,19 @@ import useGlobaStore from "./store/globalStore";
 import OverlayComponentsContainer from "./components/OverlayComponentsContainer";
 
 export default function App() {
-  const { AddTaskInputOverlay, UpdateTaskInputOverlay, selectedTaskId } =
-    useGlobaStore();
+  const {
+    AddTaskInputOverlay,
+    UpdateTaskInputOverlay,
+    selectedTaskId,
+    fetchTasks,
+  } = useGlobaStore();
   const anyOverlayIsOpened =
     AddTaskInputOverlay || UpdateTaskInputOverlay || selectedTaskId !== null;
 
+    useEffect(()=>{
+      fetchTasks()
+    },[])
+    
   useEffect(() => {
     if (anyOverlayIsOpened) {
       document.body.style.overflow = "hidden";

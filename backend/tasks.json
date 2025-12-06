@@ -1,0 +1,32 @@
+{
+  "tasks": [
+    {
+      "id": 1765030130938,
+      "title": "this is a demo task",
+      "description": "this is the description of the task\n",
+      "isCompleted": false,
+      "status": "pending"
+    },
+    {
+      "id": 1765030160549,
+      "title": "This is the tititle of th task",
+      "description": "this is the description of the task",
+      "isCompleted": false,
+      "status": "pending"
+    },
+    {
+      "id": 1765030190491,
+      "title": "This is a completed task",
+      "description": "this is the description of the completed task",
+      "isCompleted": true,
+      "status": "completed"
+    },
+    {
+      "id": 1765030224784,
+      "title": "Another completed task",
+      "description": "this is some dummy description  of the task\n",
+      "isCompleted": true,
+      "status": "completed"
+    }
+  ]
+}

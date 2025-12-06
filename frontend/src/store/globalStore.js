@@ -3,51 +3,7 @@
 // I USED THIS BECAUSE THIS WAS SIMPLE TO SETUP AND I WANTED TO KEEP THE STATE MANAGEMENT LOGIC IN A CENTRAL PLACE
 
 import { create } from "zustand";
-const tasksData = [
-  {
-    id: 1,
-    title: "Design login page UI",
-    description: "Create the layout and responsive UI for the login screen",
-    status: "pending",
-    isCompleted: false,
-  },
-  {
-    id: 2,
-    title: "Fix API integration bug",
-    description:
-      "Resolve the error occurring during POST request for task creation",
-    status: "completed",
-    isCompleted: true,
-  },
-  {
-    id: 3,
-    title: "Write documentation",
-    description: "Add project setup and usage instructions to README file",
-    status: "pending",
-    isCompleted: false,
-  },
-  {
-    id: 4,
-    title: "Create task filtering logic",
-    description: "Implement filter buttons for All, Completed, and Pending",
-    status: "completed",
-    isCompleted: true,
-  },
-  {
-    id: 5,
-    title: "Implement task edit feature",
-    description: "Allow users to update title and description",
-    status: "pending",
-    isCompleted: false,
-  },
-  {
-    id: 6,
-    title: "Optimize page layout for mobile",
-    description: "Make TaskList responsive using CSS framework",
-    status: "pending",
-    isCompleted: false,
-  },
-];
+import { taskService } from "../../services/taskService";
 
 //   tasks: IT HOLDS ALL THE TASKS THAT THE USER HAVE,
 //   filteredTasks: THIS CONTAINS THE TASKS THAT MEETS THE FILTERING CRITERIA,
@@ -57,12 +13,14 @@ const tasksData = [
 //   AddTaskInputOverlay: A BOOLEAN TO CHECK IF THE ADD NEW TASK FORM IS VISIBLE OR NOT,
 //   UpdateTaskInputOverlay: A BOOLEAN TO CHECK IF THE UPDATE TASK FORM IS VISIBLE OR NOT,
 
-const useGlobaStore = create((set) => ({
-  tasks: tasksData,
-  filteredTasks: tasksData,
+const useGlobaStore = create((set, get) => ({
+  tasks: [],
+  filteredTasks: [],
   selectedTaskId: null,
   selectedTaskToUpdate: null,
   currentFilter: "All",
+  loading: false,
+  error: null,
   AddTaskInputOverlay: false,
   UpdateTaskInputOverlay: false,
   setSelectedTaskId: (id) => {
@@ -92,80 +50,82 @@ const useGlobaStore = create((set) => ({
       };
     }),
 
-  addTask: (data) => {
-    set((store) => {
-      const newTask = {
-        ...data,
-        status: "pending",
-        id: Date.now(),
-        isCompleted: false,
-      };
-      const updatedTasks = [...store.tasks, newTask];
-      const filter = store.currentFilter.toLowerCase();
-      return {
-        tasks: updatedTasks,
-        filteredTasks:
-          filter === "all"
-            ? updatedTasks
-            : updatedTasks.filter((t) => t.status == filter),
-      };
-    });
+  //API Actions
+  fetchTasks: async () => {
+    try {
+      set({ loading: true, error: null });
+      const tasks = await taskService.getTasks();
+      set({ tasks });
+      get().setFilteredTasks();
+    } catch (err) {
+      console.error("Fetch Tasks Error:", err);
+      set({ error: err.message });
+    } finally {
+      set({ loading: false });
+    }
   },
-  deleteTask: (id) => {
-    set((store) => {
-      const updatedTasks = store.tasks.filter((t) => t.id !== id);
-      const filter = store.currentFilter.toLowerCase();
-      return {
-        tasks: updatedTasks,
-        filteredTasks:
-          filter === "all"
-            ? updatedTasks
-            : updatedTasks.filter((t) => t.status == filter),
-      };
-    });
+  addTask: async (data) => {
+    set({ loading: true, error: null });
+    try {
+      const newTask = await taskService.addTask(data);
+      set({ tasks: [...get().tasks, newTask] });
+      get().setFilteredTasks();
+    } catch (error) {
+      console.error("Error in adding task", error);
+      set({ error: error.message });
+    } finally {
+      set({ loading: false });
+    }
   },
-  updateTask: (updatedTask, id) =>
-    set((store) => {
-      const updatedTasks = store.tasks.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              title: updatedTask.title,
-              description: updatedTask.description,
-            }
-          : t
-      );
-      const filter = store.currentFilter.toLowerCase();
-      return {
-        tasks: updatedTasks,
-        filteredTasks:
-          filter === "all"
-            ? updatedTasks
-            : updatedTasks.filter((t) => t.status === filter),
-      };
-    }),
-  markTaskCompleted: (id) =>
-    set((store) => {
-      const task = store.tasks.find((t) => t.id === id);
-      const updatedTask = {
-        ...task,
-        status: "completed",
-        isCompleted: true,
-      };
+  deleteTask: async (id) => {
+    try {
+      set({ loading: true, error: null });
+      await taskService.deleteTask(id);
 
-      const remainingTasks = store.tasks.filter((t) => t.id !== id);
+      set({ tasks: get().tasks.filter((t) => t.id !== id) });
+      get().setFilteredTasks();
+    } catch (err) {
+      console.error("Error in deleting task:", err);
+      set({ error: err.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+  updateTask: async (updatedTask, id) => {
+    try {
+      set({ loading: true, error: null });
+      const updated = await taskService.updateTask(id, updatedTask);
 
-      const newTasks = [...remainingTasks, updatedTask];
-      const filter = store.currentFilter.toLowerCase();
+      set({
+        tasks: get().tasks.map((t) => (t.id === id ? updated : t)),
+      });
+      get().setFilteredTasks();
+    } catch (err) {
+      console.error("Error updating Task:", err);
+      set({ error: err.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+  markTaskCompleted: async (id) => {
+    try {
+      set({ loading: true, error: null });
+      const updatedTask = await taskService.markCompleted(id);
 
-      return {
-        tasks: newTasks,
-        filteredTasks:
-          filter === "all"
-            ? newTasks
-            : newTasks.filter((t) => t.status === filter),
-      };
-    }),
+      const updatedTasks = [
+        ...get().tasks.filter((t) => t.id !== id),
+        updatedTask,
+      ];
+
+      set({ tasks: updatedTasks });
+      get().setFilteredTasks();
+    } catch (err) {
+      console.error("Error in marking task Completed:", err);
+      set({ error: err.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
 }));
 
 export default useGlobaStore;

@@ -27,7 +27,11 @@ export default function TaskHeader() {
         </select>
       </div>
       <div className="w-full sm:w-auto flex sm:justify-end">
-        <Button handleClick={handleNewTaskClick} type="primary">
+        <Button
+          handleClick={handleNewTaskClick}
+          type="primary"
+          className="w-full sm:w-auto"
+        >
           New Task
         </Button>
       </div>
