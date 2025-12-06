@@ -1,11 +1,11 @@
-<<---HOW TO RUN THIS PROJECT-->>
+<<-HOW TO RUN THIS PROJECT->>
 
 FRONTEND:
-    -navigate to the "task-tracker\frontend" 
-    - run "npm i"
-    - run "npm run dev"
+    (1)- navigate to the "task-tracker\frontend" 
+    (2)- run "npm i"
+    (3)- run "npm run dev"
 
 BACKEND:
-    -navigate to the "task-tracker\backend" 
-    - run "npm i"
-    - run "node server.js"
+    (1)- navigate to the "task-tracker\backend" 
+    (2)- run "npm i"
+    (3)- run "node server.js"
