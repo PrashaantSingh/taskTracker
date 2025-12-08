@@ -1,4 +1,4 @@
-<<-HOW TO RUN THIS PROJECT->>
+📌<<-HOW TO RUN THIS PROJECT->>
 
 FRONTEND:
     (1)- navigate to the "task-tracker\frontend" 
