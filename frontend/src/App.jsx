@@ -15,10 +15,11 @@ export default function App() {
   const anyOverlayIsOpened =
     AddTaskInputOverlay || UpdateTaskInputOverlay || selectedTaskId !== null;
 
-    useEffect(()=>{
-      fetchTasks()
-    },[])
-    
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  //MAKING THE PAGE UN-SCROLLABE WHEN ANY MODEL IS OPENED
   useEffect(() => {
     if (anyOverlayIsOpened) {
       document.body.style.overflow = "hidden";

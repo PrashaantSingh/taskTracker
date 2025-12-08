@@ -2,8 +2,14 @@ import useGlobaStore from "../store/globalStore";
 import Task from "./Task";
 
 export default function TaskList() {
-  const { filteredTasks, setSelectedTaskId, tasks, currentFilter } =
-    useGlobaStore();
+  const {
+    filteredTasks,
+    setSelectedTaskId,
+    tasks,
+    currentFilter,
+    errors: { fetchTasks: fetchError },
+    loading: { fetchTasks: isFetching },
+  } = useGlobaStore();
 
   // SORTING THE TASKS
   const sortedTasks = [...filteredTasks].sort((a, b) => {
@@ -21,30 +27,46 @@ export default function TaskList() {
 
   return (
     <div className="p-4 sm:p-6 flex flex-col gap-4 bg-white/70 rounded-2xl shadow-sm w-full min-h-[500px]">
-      {/* SHOWING A MESSAGE WHEN THERE'S NO TASKS TO SHOW (EITHER NO TASK AT ALL OR NO TASK THAT MEETS THE FILTER CRITERIA) ELSE SHOWING THE TASKS*/}
-      {tasks.length == 0 ? (
-        <p className="text-center">
-          No Tasks found. Click the <span className="font-bold">New Task</span>{" "}
-          button to add new tasks.
-        </p>
-      ) : filteredTasks.length == 0 ? (
-        <p className="text-center">
-          No <span className="font-bold">{currentFilter}</span> Tasks
-        </p>
-      ) : (
-        sortedTasks.map((t) => (
-          //CREATING TASK COMPONENT FOR EACH TASK
-          <Task
-            key={t.id}
-            title={t.title}
-            id={t.id}
-            isCompleted={t.isCompleted}
-            status={t.status}
-            handleTaskClick={() => {
-              setSelectedTaskId(t.id);
-            }}
-          />
-        ))
+      {/* SHOWING LOADING WHEN loading IS TRUE AND THERE IS NO error */}
+      {isFetching && !fetchError && (
+        <p className="text-center">Loading Tasks...</p>
+      )}
+
+      {/* SHOWING THE ERROR MESSAGE ONLY WHEN loading IS FALSE AND error EXISTS */}
+      {!isFetching && fetchError && (
+        <p className="text-red-500 text-center">{fetchError}</p>
+      )}
+
+      {/* SHOWING THE MAIN CONTENT ONLY WHEN THERE IS NO loading AND NO error */}
+      {!isFetching && !fetchError && (
+        <>
+          {/* SHOWING A MESSAGE WHEN THERE'S NO TASKS TO SHOW (EITHER NO TASK AT ALL OR NO TASK THAT MEETS THE FILTER CRITERIA) ELSE SHOWING THE TASKS*/}
+          {tasks.length === 0 ? (
+            <p className="text-center">
+              No Tasks found. Click the{" "}
+              <span className="font-bold">New Task</span> button to add new
+              tasks.
+            </p>
+          ) : filteredTasks.length === 0 ? (
+            <p className="text-center">
+              No <span className="font-bold">{currentFilter}</span> Tasks
+            </p>
+          ) : (
+            sortedTasks.map((t) => (
+              //CREATING TASK COMPONENT FOR EACH TASK
+              <Task
+                key={t.id}
+                title={t.title}
+                id={t.id}
+                isCompleted={t.isCompleted}
+                status={t.status}
+                handleTaskClick={() => {
+                  setSelectedTaskId(t.id);
+                }}
+              />
+            ))
+          )}
+        </>
       )}
     </div>
   );

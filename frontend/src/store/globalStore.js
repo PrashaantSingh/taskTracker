@@ -3,7 +3,7 @@
 // I USED THIS BECAUSE THIS WAS SIMPLE TO SETUP AND I WANTED TO KEEP THE STATE MANAGEMENT LOGIC IN A CENTRAL PLACE
 
 import { create } from "zustand";
-import { taskService } from "../../services/taskService";
+import { taskService } from "../services/taskService";
 
 //   tasks: IT HOLDS ALL THE TASKS THAT THE USER HAVE,
 //   filteredTasks: THIS CONTAINS THE TASKS THAT MEETS THE FILTERING CRITERIA,
@@ -19,8 +19,20 @@ const useGlobaStore = create((set, get) => ({
   selectedTaskId: null,
   selectedTaskToUpdate: null,
   currentFilter: "All",
-  loading: false,
-  error: null,
+  loading: {
+    fetchTasks: false,
+    addTask: false,
+    updateTask: false,
+    deleteTask: false,
+    markComplete: false,
+  },
+  errors: {
+    fetchTasks: null,
+    addTask: null,
+    updateTask: null,
+    deleteTask: null,
+    markComplete: null,
+  },
   AddTaskInputOverlay: false,
   UpdateTaskInputOverlay: false,
   setSelectedTaskId: (id) => {
@@ -50,66 +62,113 @@ const useGlobaStore = create((set, get) => ({
       };
     }),
 
-  //API Actions
+  //API Related methods/functions
   fetchTasks: async () => {
     try {
-      set({ loading: true, error: null });
+      set((state) => ({
+        loading: { ...state.loading, fetchTasks: true },
+        errors: { ...state.errors, fetchTasks: null },
+      }));
       const tasks = await taskService.getTasks();
       set({ tasks });
       get().setFilteredTasks();
     } catch (err) {
-      console.error("Fetch Tasks Error:", err);
-      set({ error: err.message });
+      console.error(err);
+      set((state) => ({
+        errors: {
+          ...state.errors,
+          fetchTasks: err.message || "Failed to load tasks",
+        },
+      }));
     } finally {
-      set({ loading: false });
+      set((state) => ({
+        loading: { ...state.loading, fetchTasks: false },
+      }));
     }
   },
   addTask: async (data) => {
-    set({ loading: true, error: null });
+    set((state) => ({
+      loading: { ...state.loading, addTask: true },
+      errors: { ...state.errors, addTask: null },
+    }));
     try {
       const newTask = await taskService.addTask(data);
       set({ tasks: [...get().tasks, newTask] });
       get().setFilteredTasks();
+      return true;
     } catch (error) {
       console.error("Error in adding task", error);
-      set({ error: error.message });
+      set((state) => ({
+        errors: {
+          ...state.errors,
+          addTask: error.message || "Failed to add task",
+        },
+      }));
+      return false;
     } finally {
-      set({ loading: false });
+      set((state) => ({
+        loading: { ...state.loading, addTask: false },
+      }));
     }
   },
   deleteTask: async (id) => {
+    set((state) => ({
+      loading: { ...state.loading, deleteTask: true },
+      errors: { ...state.errors, deleteTask: null },
+    }));
     try {
-      set({ loading: true, error: null });
       await taskService.deleteTask(id);
 
       set({ tasks: get().tasks.filter((t) => t.id !== id) });
       get().setFilteredTasks();
     } catch (err) {
       console.error("Error in deleting task:", err);
-      set({ error: err.message });
+      set((state) => ({
+        errors: {
+          ...state.errors,
+          deleteTask: err.message || "Failed to delete task",
+        },
+      }));
     } finally {
-      set({ loading: false });
+      set((state) => ({
+        loading: { ...state.loading, deleteTask: false },
+      }));
     }
   },
   updateTask: async (updatedTask, id) => {
+    set((state) => ({
+      loading: { ...state.loading, updateTask: true },
+      errors: { ...state.errors, updateTask: null },
+    }));
     try {
-      set({ loading: true, error: null });
       const updated = await taskService.updateTask(id, updatedTask);
 
       set({
         tasks: get().tasks.map((t) => (t.id === id ? updated : t)),
       });
       get().setFilteredTasks();
+      return true;
     } catch (err) {
       console.error("Error updating Task:", err);
-      set({ error: err.message });
+      set((state) => ({
+        errors: {
+          ...state.errors,
+          updateTask: err.message || "Failed to update task",
+        },
+      }));
+      return false;
     } finally {
-      set({ loading: false });
+      set((state) => ({
+        loading: { ...state.loading, updateTask: false },
+      }));
     }
   },
   markTaskCompleted: async (id) => {
+    set((state) => ({
+      loading: { ...state.loading, markComplete: true },
+      errors: { ...state.errors, markComplete: null },
+    }));
     try {
-      set({ loading: true, error: null });
       const updatedTask = await taskService.markCompleted(id);
 
       const updatedTasks = [
@@ -121,9 +180,16 @@ const useGlobaStore = create((set, get) => ({
       get().setFilteredTasks();
     } catch (err) {
       console.error("Error in marking task Completed:", err);
-      set({ error: err.message });
+      set((state) => ({
+        errors: {
+          ...state.errors,
+          markComplete: err.message || "Failed to mark task completed",
+        },
+      }));
     } finally {
-      set({ loading: false });
+      set((state) => ({
+        loading: { ...state.loading, markComplete: false },
+      }));
     }
   },
 }));

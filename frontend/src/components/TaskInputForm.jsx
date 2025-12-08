@@ -14,7 +14,11 @@ export default function TaskInputForm({ variant }) {
     selectedTaskToUpdate,
     filteredTasks,
     setSelectedTaskToUpdate,
+    errors: { addTask: addTaskError, updateTask: updateTaskError },
+    loading: { addTask: isAddingTask, updateTask: isUpdatingTask },
   } = useGlobaStore();
+
+  console.log(addTaskError);
 
   const emptyState = { title: "", description: "" };
 
@@ -40,22 +44,30 @@ export default function TaskInputForm({ variant }) {
     }
   }, [variant, selectedTaskToUpdate]);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
     if (variant === "add") {
-      addTask(taskFormData);
-      hideTaskInput();
+      const success = await addTask(taskFormData);
+      if (success) {
+        setTaskFormData(emptyState);
+        hideTaskInput();
+      }
+      return;
     }
 
     if (variant === "update") {
-      updateTask(taskFormData, selectedTaskToUpdate);
-      setSelectedTaskToUpdate(null);
-      hideTaskUpdateInput();
+      const success = await updateTask(taskFormData, selectedTaskToUpdate);
+      if (success) {
+        setTaskFormData(emptyState);
+        setSelectedTaskToUpdate(null);
+        hideTaskUpdateInput();
+      }
     }
-
-    setTaskFormData(emptyState);
   }
+
+  const isSubmitting = variant === "add" ? isAddingTask : isUpdatingTask;
+  const currentError = variant === "add" ? addTaskError : updateTaskError;
   return (
     <DarkOverlay
       //a BOOLEAN PROP THAT CONTROLS THE VISIBILITY OF THE OVERLAY COMPONENT
@@ -105,9 +117,13 @@ export default function TaskInputForm({ variant }) {
             }
           />
         </div>
-
-        <Button type="primary">
-          {variant[0].toUpperCase() + variant.slice(1)}
+        {!isSubmitting && currentError ? (
+          <p className="text-red-500">{currentError}</p>
+        ) : null}
+        <Button type="primary" className="w-full self-end">
+          {isSubmitting
+            ? `${variant[0].toUpperCase() + variant.slice(1)}ing...`
+            : variant[0].toUpperCase() + variant.slice(1)}
         </Button>
       </form>
     </DarkOverlay>
